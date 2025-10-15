@@ -1,12 +1,10 @@
-cmake_minimum_required(VERSION 3.10)
-
-project(ComputerSecurity)
+cmake_minimum_required(VERSION 3.16)
+project(UniversityAutoTest VERSION 1.0.0)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-file(GLOB_RECURSE SOURCES "src/*.cpp")
+enable_testing()
 
-add_executable(main ${SOURCES})
-
-target_include_directories(main PUBLIC include)
+add_subdirectory(src)
+add_subdirectory(tests)
