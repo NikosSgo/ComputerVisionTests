@@ -29,7 +29,6 @@ std::string Lab1::task1(std::string input_file) {
   }
 }
 
-// Преобразование BGR → Grayscale
 cv::Mat Lab1::task2_grayscale(const cv::Mat &bgr_frame) {
   if (bgr_frame.empty()) {
     throw std::invalid_argument("Входной фрейм пустой");
@@ -46,7 +45,6 @@ cv::Mat Lab1::task2_grayscale(const cv::Mat &bgr_frame) {
   return grayscale;
 }
 
-// Преобразование BGR → HSV
 cv::Mat Lab1::task2_hsv(const cv::Mat &bgr_frame) {
   if (bgr_frame.empty()) {
     throw std::invalid_argument("Входной фрейм пустой");
@@ -63,8 +61,7 @@ cv::Mat Lab1::task2_hsv(const cv::Mat &bgr_frame) {
   return hsv;
 }
 
-void Lab1::task2() {
-  // Демонстрационная функция для отображения результатов
+void Lab1::task3() {
   cv::Mat bgr_frame = cv::imread("test_image.jpg");
 
   if (bgr_frame.empty()) {
@@ -74,13 +71,10 @@ void Lab1::task2() {
   }
 
   try {
-    // Преобразование в Grayscale
     cv::Mat grayscale = task2_grayscale(bgr_frame);
 
-    // Преобразование в HSV
     cv::Mat hsv = task2_hsv(bgr_frame);
 
-    // Отображение результатов
     cv::namedWindow("Original BGR", cv::WINDOW_AUTOSIZE);
     cv::namedWindow("Grayscale", cv::WINDOW_AUTOSIZE);
     cv::namedWindow("HSV", cv::WINDOW_AUTOSIZE);
@@ -99,5 +93,5 @@ void Lab1::task2() {
   }
 }
 
-void Lab1::task3() {};
 void Lab1::task4() {};
+void Lab1::task5() {};

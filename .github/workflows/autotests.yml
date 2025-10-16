@@ -1,0 +1,107 @@
+name: Smart Auto Tests - Self Hosted
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master ]
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  detect-tests:
+    runs-on: [self-hosted, linux, x64]
+    outputs:
+      task1: ${{ steps.detect.outputs.task1 }}
+      task2: ${{ steps.detect.outputs.task2 }}
+      task3: ${{ steps.detect.outputs.task3 }}
+      all_tests: ${{ steps.detect.outputs.all_tests }}
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Detect tests from commit message
+      id: detect
+      run: |
+        COMMIT_MSG=$(git log --format=%B -n 1 HEAD)
+        echo "Commit: $COMMIT_MSG"
+        
+        if echo "$COMMIT_MSG" | grep -qiE '\b(task1|lab1|задача1)\b'; then
+          echo "task1=true" >> $GITHUB_OUTPUT
+        fi
+        
+        if echo "$COMMIT_MSG" | grep -qiE '\b(task2|lab2|задача2)\b'; then
+          echo "task2=true" >> $GITHUB_OUTPUT
+        fi
+        
+        if echo "$COMMIT_MSG" | grep -qiE '\b(task3|lab3|задача3)\b'; then
+          echo "task3=true" >> $GITHUB_OUTPUT
+        fi
+        
+        if echo "$COMMIT_MSG" | grep -qiE '\b(test|tests|тест|тесты|autotest)\b'; then
+          echo "all_tests=true" >> $GITHUB_OUTPUT
+        fi
+
+  build:
+    needs: detect-tests
+    if: needs.detect-tests.outputs.task1 == 'true' || needs.detect-tests.outputs.task2 == 'true' || needs.detect-tests.outputs.task3 == 'true' || needs.detect-tests.outputs.all_tests == 'true'
+    runs-on: [self-hosted, linux, x64]  # Self-hosted runner
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install dependencies (if missing)
+      run: |
+        # Проверяем и устанавливаем только если нужно
+        if ! command -v cmake &> /dev/null; then
+          sudo apt-get update
+          sudo apt-get install -y cmake g++ libopencv-dev libgtest-dev
+        fi
+
+    - name: Configure CMake
+      run: |
+        mkdir -p build
+        cd build
+        cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE ..
+
+    - name: Build project
+      run: |
+        cd build
+        make -j$(nproc)  # Используем все доступные ядра
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: built-tests
+        path: build/tests/run_tests
+
+  run-tests:
+    needs: [detect-tests, build]
+    runs-on: [self-hosted, linux, x64]  # Self-hosted runner
+    strategy:
+      matrix:
+        include:
+          - task: task1
+            filter: "Lab1Test.Task1*"
+          - task: task2  
+            filter: "Lab1Test.Task2*"
+          - task: task3
+            filter: "Lab1Test.Task3*"
+          - task: all
+            filter: "*"
+    steps:
+    - name: Download build artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: built-tests
+        path: build/tests/
+
+    - name: Make test executable
+      run: chmod +x build/tests/run_tests
+
+    - name: Run ${{ matrix.task }} tests
+      if: ${{ needs.detect-tests.outputs[matrix.task] == 'true' || (matrix.task == 'all' && needs.detect-tests.outputs.all_tests == 'true') }}
+      run: |
+        cd build/tests
+        ./run_tests --gtest_filter="${{ matrix.filter }}"
