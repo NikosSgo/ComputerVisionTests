@@ -1,14 +1,11 @@
-include_directories(${CMAKE_SOURCE_DIR}/include)
+add_library(lab_1 labs/lab_1.cpp)
 
-# Создаем библиотеку математических операций
-add_library(math_operations
-    math_operations.cpp
+target_link_libraries(lab_1 ${OpenCV_LIBS})
+target_include_directories(lab_1 PRIVATE
+    ${OpenCV_INCLUDE_DIRS}
+    ${CMAKE_SOURCE_DIR}/include
 )
 
-# Основное приложение
-add_executable(main_app
-    main.cpp
-)
-
-# Линкуем основное приложение с нашей библиотекой
-target_link_libraries(main_app math_operations)
+# main application
+add_executable(main_app main.cpp)
+target_link_libraries(main_app lab_1)
